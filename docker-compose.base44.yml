@@ -1,0 +1,31 @@
+# Base44 sandbox dev environment — runs the app from the cloned source (never a prebuilt image).
+services:
+  web:
+    image: node:22
+    working_dir: /app
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    environment:
+      - BASE44_PREVIEW_MODE
+      - NEXT_TELEMETRY_DISABLED=1
+    command:
+      - sh
+      - -ec
+      - npm ci && exec npx next dev -H 0.0.0.0 -p 3000
+    ports:
+      - "3000:3000"
+    restart: on-failure
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://localhost:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 60s
+
+volumes:
+  node_modules:
